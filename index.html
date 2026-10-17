@@ -17,6 +17,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/4.2.8/es6-promise.auto.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/3.6.2/fetch.min.js"></script>
+  
+  <!-- === OneSignal SDK Integration === -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "88e436de-b0b9-4fee-a84b-719b6d8d2f72",
+        safari_web_id: "",
+        notifyButton: {
+          enable: true,
+        },
+      });
+    });
+  </script>
+  <!-- ================================ -->
+
   <style>
     :root {
       --primary: #1877F2;
@@ -1075,7 +1092,7 @@
             <input type="text" id="welcomeNameInput" class="modal-input" placeholder="اكتب اسمك الثلاثي هنا" required>
         </div>
 
-        <p>بالنقر على "تسجيل"، أنت توافق على الشروط.</p>
+        <p>بالنقر على "تسجيل", أنت توافق على الشروط.</p>
         
         <button id="agreeButton" class="download-btn" onclick="validateAndEnter()">
             <i class="fas fa-check"></i> تسجيل الاسم والدخول
@@ -2018,37 +2035,6 @@
       
       loadAccessCodes();
     });
-  </script>
-  <script>
-    // === تفعيل الإشعارات بالجهاز ===
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js")
-        .then((reg) => {
-          console.log("Service Worker Registered");
-          // طلب صلاحية الإشعارات تلقائياً من الطالب
-          if (Notification && Notification.permission !== "granted") {
-            Notification.requestPermission().then(permission => {
-              if (permission === "granted") {
-                console.log("تم السماح بالإشعارات.");
-              }
-            });
-          }
-        })
-        .catch(err => console.error("SW registration failed", err));
-    }
-
-    // دالة تجريبية لإرسال إشعار عند تنزيل أو إضافة محاضرة جديدة
-    function sendNewLectureNotification(lectureTitle) {
-      if (navigator.serviceWorker && Notification.permission === "granted") {
-        navigator.serviceWorker.ready.then(registration => {
-          registration.showNotification("محاضرة جديدة تم تنزيلها!", {
-            body: lectureTitle,
-            icon: "https://j.top4top.io/p_3598vdrdp1.jpg",
-            badge: "https://j.top4top.io/p_3598vdrdp1.jpg"
-          });
-        });
-      }
-    }
   </script>
  </body>
 </html>
