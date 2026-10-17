@@ -67,7 +67,6 @@
       margin: 0;
       padding: 0;
       font-family: 'Almarai', sans-serif;
-      /* منع تحديد النصوص في كامل الموقع */
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
@@ -83,7 +82,6 @@
       -webkit-tap-highlight-color: transparent; 
     }
 
-    /* === Rotation Lock Styles === */
     #rotate-warning {
         display: none;
         position: fixed;
@@ -123,7 +121,6 @@
         display: none !important;
     }
     
-    /* === Screen Recording Protection Overlay === */
     #security-overlay {
         display: none;
         position: fixed;
@@ -144,8 +141,6 @@
         color: var(--error);
         margin-bottom: 20px;
     }
-
-    /* ============================ */
 
     ::-webkit-scrollbar {
       width: 8px;
@@ -626,7 +621,6 @@
       gap: 2rem;
     }
 
-    /* === Video Container Modifications === */
     .video-container {
       position: relative;
       background: black;
@@ -651,7 +645,6 @@
         object-fit: contain;
     }
 
-    /* Drive Iframe styling */
     #driveFrame {
         display: none;
         border: none;
@@ -661,7 +654,6 @@
         max-height: 600px;
     }
 
-    /* When Drive Mode is active */
     .video-container.drive-mode .plyr {
         display: none !important;
     }
@@ -670,7 +662,6 @@
         display: block;
     }
     
-    /* --- The Drive Blocker (Transparent Mask) --- */
     #driveMask {
         position: absolute;
         top: 0;
@@ -685,9 +676,6 @@
     .video-container.drive-mode #driveMask {
         display: block; 
     }
-    /* ------------------------------------------- */
-
-    /* ==================================================== */
 
     .video-details {
       background: var(--gradient-card);
@@ -709,7 +697,6 @@
       margin-bottom: 2rem;
     }
     
-    /* === MOVING WATERMARK STYLE === */
     .video-watermark {
       position: absolute;
       font-size: 1.2rem;
@@ -1267,25 +1254,801 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script src="https://cdn.plyr.io/3.7.2/plyr.polyfilled.js"></script>
   <script>
-    // === حماية إضافية (منع الكليك الأيمن واختصارات الفحص) ===
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || 
-           (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
-           (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 'S' || e.key === 's'))) {
-            e.preventDefault();
-            return false;
-        }
-    });
-    // ===============================================
-
-    // === حماية المحتوى وتسجيل الشاشة ===
-    
-    // 1. عند محاولة تصوير الشاشة بزر PrintScreen
     document.addEventListener('keyup', (e) => {
         if (e.key === 'PrintScreen') {
             alert('يمنع أخذ لقطات شاشة في المنصة.');
-            document.body.style.display
+            document.body.style.display = 'none';
+            setTimeout(() => {
+                 document.body.style.display = 'block';
+            }, 1000);
+        }
+    });
+
+    function handleVisibilityChange() {
+        if (document.hidden) {
+            document.getElementById('security-overlay').style.display = 'flex';
+            if (player && !player.paused) {
+                player.pause();
+            }
+        } else {
+            document.getElementById('security-overlay').style.display = 'none';
+        }
+    }
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    window.onblur = function() {
+        document.getElementById('security-overlay').style.display = 'flex';
+        if (player && !player.paused) {
+             player.pause();
+        }
+    };
+
+    window.onfocus = function() {
+        document.getElementById('security-overlay').style.display = 'none';
+    };
+
+    function initializeTheme() {
+      const stored = localStorage.getItem('theme');
+      const theme = stored || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+      updateThemeIcon(theme);
+    }
+
+    function updateThemeIcon(theme) {
+      const icon = document.getElementById('themeToggle').querySelector('i');
+      if (theme === 'light') {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      document.documentElement.setAttribute('data-theme', newTheme);
+      updateThemeIcon(newTheme);
+    });
+    
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        const isAppContentVisible = document.getElementById('appContent').style.display === 'block';
+        if (isAppContentVisible) {
+             document.body.style.overflow = 'auto';
+        }
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    const PROGRESS_KEY = 'video_progress';
+    let videoProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
+
+    function saveVideoProgress(url, time) {
+      videoProgress[url] = time;
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(videoProgress));
+    }
+
+    function getVideoProgress(url) {
+      return videoProgress[url] || 0;
+    }
+
+    const COMPLETED_KEY = 'completed_lectures';
+    let completedLectures = JSON.parse(localStorage.getItem(COMPLETED_KEY) || '{}');
+
+    function saveCompletedLectures() {
+      localStorage.setItem(COMPLETED_KEY, JSON.stringify(completedLectures));
+    }
+    
+    function toggleLectureCompletion(url, event) {
+        event.stopPropagation();
+        
+        if (completedLectures[url]) {
+            delete completedLectures[url];
+        } else {
+            completedLectures[url] = true;
+        }
+        saveCompletedLectures();
+        
+        if (currentTeacher) {
+            renderClasses(currentTeacher.classes);
+        }
+    }
+
+    function updateStudentCounter(codes) {
+        try {
+            const allCodes = Object.keys(codes);
+            const activatedCodes = allCodes.filter(code => codes[code] && codes[code].active === true);
+            const activatedCount = activatedCodes.length;
+            
+            const counterElement = document.querySelector('#studentCounter span');
+            if (counterElement) {
+                counterElement.textContent = `${activatedCount} طالب مفعل`;
+                document.getElementById('studentCounter').style.display = 'flex';
+            }
+        } catch (e) {
+            console.error('Failed to update student counter:', e);
+            const counterElement = document.getElementById('studentCounter');
+            if (counterElement) {
+                counterElement.style.display = 'none';
+            }
+        }
+    }
+
+    let hls;
+    let player;
+
+    function initPlayer(isYouTube = false) {
+        if (player) {
+            player.destroy();
+        }
+        
+        const options = {
+            controls: ['play-large', 'rewind', 'play', 'fast-forward', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'airplay', 'fullscreen'],
+            settings: ['speed', 'quality'],
+            speed: { selected: 1, options: [0.5, 1, 1.25, 1.5, 2] },
+            seekTime: 10
+        };
+
+        if (isYouTube) {
+            options.youtube = { noCookie: false, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 };
+        }
+
+        player = new Plyr('#player', options);
+        
+        player.on('enterfullscreen', () => {
+            document.body.classList.add('video-fullscreen-active');
+            if (screen.orientation && screen.orientation.lock) {
+                try {
+                    screen.orientation.lock('landscape').catch(e => console.log('Rotation lock blocked:', e));
+                } catch (e) {}
+            }
+        });
+
+        player.on('exitfullscreen', () => {
+            document.body.classList.remove('video-fullscreen-active');
+            if (screen.orientation && screen.orientation.unlock) {
+                try {
+                    screen.orientation.unlock(); 
+                    screen.orientation.lock('portrait').catch(e => {});
+                } catch(e){}
+            }
+        });
+
+        player.on('play', () => {
+            progressSaveInterval = setInterval(() => {
+                if (currentLectureLink && player.currentTime > 0) {
+                saveVideoProgress(currentLectureLink, player.currentTime);
+                }
+            }, 5000);
+        });
+
+        player.on('pause', () => {
+            if (progressSaveInterval) {
+                clearInterval(progressSaveInterval);
+            }
+            if (currentLectureLink && player.currentTime > 0) {
+                saveVideoProgress(currentLectureLink, player.currentTime);
+            }
+        });
+    }
+
+    initPlayer();
+    let progressSaveInterval;
+
+    const pages = {
+      home: document.getElementById('homePage'),
+      classes: document.getElementById('classesPage'),
+      video: document.getElementById('videoPage'),
+      materials: document.getElementById('materialsPage'),
+      exams: document.getElementById('examsPage')
+    };
+    const teachersGrid = document.getElementById('teachersGrid');
+    const materialsGrid = document.getElementById('materialsGrid');
+    const examsGrid = document.getElementById('examsGrid');
+    
+    const navButtons = document.querySelectorAll('.nav-btn');
+    let allTeachers = [], allMaterials = [], allExams = [];
+    let currentTeacher = null, currentClassIndex = 0, currentLectureIndex = 0, currentLectureLink = '';
+
+    function navigate(page) {
+      window.scrollTo(0, 0);
+
+      const header = document.querySelector('header');
+      if (page === 'video') {
+          header.style.display = 'none'; 
+      } else {
+          header.style.display = 'flex';
+          stopWatermarkAnimation();
+      }
+
+      if (page !== 'video') {
+        const driveFrame = document.getElementById('driveFrame');
+        if (driveFrame) driveFrame.src = ''; 
+        if (player) player.pause();
+        
+        if (progressSaveInterval) {
+            clearInterval(progressSaveInterval);
+        }
+        if (hls) {
+          hls.destroy();
+          hls = null;
+        }
+        const watermark = document.getElementById('videoWatermark');
+        if (watermark) {
+          watermark.textContent = '';
+        }
+      }
+
+      Object.keys(pages).forEach(k => {
+        pages[k].classList.remove('active');
+      });
+      pages[page].classList.add('active');
+    }
+
+    function renderTeachers(list = allTeachers) {
+      if (!list || list.length === 0) {
+        teachersGrid.innerHTML = `
+        <div class="teacher-card" style="grid-column: 1/-1; text-align: center; background: var(--bg-secondary);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--warning); margin-bottom: 1rem;"></i>
+            <h3>لا توجد دورات متاحة</h3>
+            <p>قد تكون هناك مشكلة في تحميل البيانات أو لا تتوفر دورات حالياً.</p>
+        </div>
+        `;
+        return;
+      }
+
+      teachersGrid.innerHTML = list.map(teacher => `
+        <div class="teacher-card" onclick="showTeacher('${teacher.id}')">
+          <img src="${teacher.image}" alt="${teacher.name}" class="teacher-img" loading="lazy">
+          <h3 class="teacher-name">${teacher.name}</h3>
+          <p class="teacher-subject">${teacher.subject}</p>
+        </div>
+      `).join('');
+    }
+
+    function showTeacher(teacherId) {
+      const teacher = allTeachers.find(t => t.id == teacherId);
+      if (!teacher) return;
+      
+      currentTeacher = teacher;
+      document.getElementById('teacherImage').src = teacher.image;
+      document.getElementById('teacherImage').alt = teacher.name;
+      document.getElementById('teacherName').textContent = teacher.name;
+      document.getElementById('teacherSubject').textContent = teacher.subject;
+      
+      renderClasses(teacher.classes);
+      navigate('classes');
+    }
+
+    function renderClasses(classes) {
+      const listContainer = document.getElementById('classesList');
+      listContainer.innerHTML = classes.map((cls, classIndex) => `
+        <div class="class-card">
+          <div class="class-header" onclick="toggleLecturesList(${classIndex})">
+            <h3>${cls.name} (${cls.lectures.length} محاضرة)</h3>
+            <span><i class="fas fa-chevron-down"></i></span>
+          </div>
+          <div class="lectures-list" id="lecturesList-${classIndex}">
+            ${cls.lectures.map((lecture, lectureIndex) => {
+                const lectureUrl = lecture.url;
+                const isCompleted = completedLectures[lectureUrl];
+                const progress = getVideoProgress(lectureUrl);
+                const progressText = progress > 0 ? `(تقدم: ${formatTime(progress)})` : '';
+                
+                return `
+                <div class="lecture-item" onclick="playLecture('${lectureUrl}', ${classIndex},${lectureIndex})">
+                    <div class="lecture-content">
+                        <div class="lecture-checkbox ${isCompleted ? 'completed' : ''}" onclick="toggleLectureCompletion('${lectureUrl}', event)">
+                            ${isCompleted ? '<i class="fas fa-check"></i>' : ''}
+                        </div>
+                        <div class="lecture-title">
+                            <h4>${lecture.title}</h4>
+                            <p class="lecture-progress">${progressText}</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-video" style="color: var(--primary);"></i>
+                </div>
+                `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleLecturesList(index) {
+      const list = document.getElementById(`lecturesList-${index}`);
+      const icon = list.previousElementSibling.querySelector('span i');
+      const isExpanded = list.style.display === 'grid';
+      list.style.display = isExpanded ? 'none' : 'grid';
+      icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    let wmInterval;
+    let wmX = 0;
+    let wmY = 0;
+    let wmDx = 1;
+    let wmDy = 1;
+
+    function startWatermarkAnimation() {
+        const watermark = document.getElementById('videoWatermark');
+        const container = document.querySelector('.video-container');
+        
+        if (!watermark || !container) return;
+        
+        const speed = 1.5; 
+        
+        clearInterval(wmInterval);
+        wmInterval = setInterval(() => {
+            if (!document.getElementById('videoPage').classList.contains('active')) return;
+
+            const maxWidth = container.clientWidth - watermark.offsetWidth;
+            const maxHeight = container.clientHeight - watermark.offsetHeight;
+            
+            wmX += wmDx * speed;
+            wmY += wmDy * speed;
+            
+            if (wmX >= maxWidth) { wmX = maxWidth; wmDx = -1; }
+            if (wmX <= 0) { wmX = 0; wmDx = 1; }
+            if (wmY >= maxHeight) { wmY = maxHeight; wmDy = -1; }
+            if (wmY <= 0) { wmY = 0; wmDy = 1; }
+            
+            watermark.style.left = wmX + 'px';
+            watermark.style.top = wmY + 'px';
+            
+        }, 30);
+    }
+
+    function stopWatermarkAnimation() {
+        clearInterval(wmInterval);
+    }
+
+    function playLecture(url, classIndex, lectureIndex) {
+      const isPaid = localStorage.getItem('isPaidUser') === 'true';
+      const isFreeCourse = currentTeacher && currentTeacher.isPaid === false;
+
+      if (!isPaid && !isFreeCourse) {
+          showUpgradeModal();
+          return;
+      }
+      
+      currentLectureLink = url;
+      currentClassIndex = classIndex;
+      currentLectureIndex = lectureIndex;
+      
+      const lecture = currentTeacher.classes[classIndex].lectures[lectureIndex];
+      document.getElementById('videoTitle').textContent = lecture.title;
+      document.getElementById('videoDescription').textContent = lecture.description;
+
+      const videoElement = document.getElementById('player');
+      const driveFrame = document.getElementById('driveFrame');
+      const container = document.querySelector('.video-container');
+
+      const savedName = localStorage.getItem('studentName') || 'طالب منصة التفوق';
+      const savedPhone = localStorage.getItem('studentPhone') ? ` - ${localStorage.getItem('studentPhone')}` : '';
+      
+      const watermark = document.getElementById('videoWatermark');
+      if (watermark) {
+          watermark.textContent = `${savedName}${savedPhone}`;
+      }
+      
+      if (hls) {
+          hls.destroy();
+          hls = null;
+      }
+      if (player) {
+          player.pause();
+      }
+
+      if (url.includes('drive.google.com')) {
+          container.classList.add('drive-mode');
+          let embedUrl = url.replace('/view', '/preview');
+          if (!embedUrl.includes('preview')) {
+               embedUrl = embedUrl.endsWith('/') ? embedUrl + 'preview' : embedUrl + '/preview';
+          }
+          driveFrame.src = embedUrl;
+
+      } else {
+          container.classList.remove('drive-mode');
+          driveFrame.src = ''; 
+
+          const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+          initPlayer(isYouTube);
+
+          if (isYouTube) {
+              player.source = {
+                  type: 'video',
+                  sources: [{ src: url, provider: 'youtube' }],
+              };
+          } else if (url.endsWith('.m3u8')) {
+              if (Hls.isSupported()) {
+                  hls = new Hls();
+                  hls.loadSource(url);
+                  hls.attachMedia(videoElement);
+                  hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                      player.currentTime = getVideoProgress(url);
+                      player.play();
+                  });
+              } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                  videoElement.src = url;
+                  videoElement.addEventListener('loadedmetadata', () => {
+                      player.currentTime = getVideoProgress(url);
+                      player.play();
+                  });
+              }
+          } else {
+              player.source = {
+                type: 'video',
+                sources: [{ src: url, type: 'video/mp4' }],
+              };
+              
+              setTimeout(() => {
+                  if(getVideoProgress(url) > 0) {
+                      player.currentTime = getVideoProgress(url);
+                  }
+                  player.play();
+              }, 500);
+          }
+      }
+
+      navigate('video');
+      startWatermarkAnimation();
+    }
+
+    function loadContent(type) {
+        const isPaid = localStorage.getItem('isPaidUser') === 'true';
+
+        if ((type === 'materials' || type === 'exams') && !isPaid) {
+            showUpgradeModal();
+            return;
+        }
+        
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`.nav-btn[onclick="loadContent('${type}')"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        if (type === 'materials') {
+            renderMaterials(allMaterials);
+            navigate('materials');
+        } else if (type === 'exams') {
+            renderExams(allExams);
+            navigate('exams');
+        } else {
+            if (isPaid) {
+               const paidCourses = allTeachers.filter(t => t.isPaid !== false);
+               renderTeachers(paidCourses);
+            } else {
+               renderTeachers(allTeachers.filter(t => t.isPaid === false));
+            }
+            navigate('home'); 
+        }
+    }
+
+    function renderMaterials(list = allMaterials) {
+      if (!list || list.length === 0) {
+        materialsGrid.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">لا توجد ملازم متاحة في هذه الدورة.</p>`;
+        return;
+      }
+      materialsGrid.innerHTML = list.map(item => `
+        <div class="material-card">
+          <img src="${item.image}" alt="${item.title}" class="material-img" loading="lazy">
+          <h3 class="material-title">${item.title}</h3>
+          <p class="material-subject">${item.subject}</p>
+          <a href="${item.url}" target="_blank" class="download-btn"><i class="fas fa-download"></i> تحميل الملزمة</a>
+        </div>
+      `).join('');
+    }
+
+    function renderExams(list = allExams) {
+      if (!list || list.length === 0) {
+        examsGrid.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">لا توجد امتحانات متاحة في هذه الدورة.</p>`;
+        return;
+      }
+      examsGrid.innerHTML = list.map(item => `
+        <div class="exam-card">
+          <img src="${item.image}" alt="${item.title}" class="exam-img" loading="lazy">
+          <h3 class="exam-title">${item.title}</h3>
+          <p class="exam-subject">${item.subject}</p>
+          <a href="${item.url}" target="_blank" class="download-btn"><i class="fas fa-external-link-alt"></i> ابدأ الامتحان</a>
+        </div>
+      `).join('');
+    }
+
+    function loadData() {
+      return fetch('data.json?t=' + Date.now())
+        .then(response => {
+          if (!response.ok) throw new Error('فشل تحميل البيانات');
+          return response.json();
+        })
+        .then(data => {
+          allTeachers = data.teachers || [];
+          allMaterials = data.materials || [];
+          allExams = data.exams || [];
+          console.log('تم تحميل البيانات بنجاح:', data);
+        })
+        .catch(error => {
+          console.error('خطأ في تحميل البيانات:', error);
+          teachersGrid.innerHTML = `
+            <div class="teacher-card" style="grid-column: 1/-1; text-align: center; background: var(--bg-secondary);">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--error); margin-bottom: 1rem;"></i>
+                <h3>خطأ في النظام</h3>
+                <p>فشل تحميل محتوى الدورات. يرجى التواصل مع الدعم الفني.</p>
+            </div>
+          `;
+        });
+    }
+
+    const fiveMinutesInMs = 5 * 60 * 1000;
+
+    function checkRevocationStatus() {
+      const userCode = localStorage.getItem('userAccessCode');
+      if (!userCode) return; 
+
+      fetch('sys-config-v2.json?t=' + Date.now()) 
+        .then(response => {
+          if (!response.ok) throw new Error('System config file not found');
+          return response.json();
+        })
+        .then(codesFromServer => {
+          const codeStatus = codesFromServer[userCode];
+          if (!codeStatus) { 
+              localStorage.removeItem('userAccessCode');
+              localStorage.removeItem('isPaidUser');
+              localStorage.removeItem('studentName');
+              localStorage.removeItem('studentPhone');
+              
+              alert('تم إلغاء صلاحية الوصول لهذا الرمز من قبل الإدارة. سيتم إخراجك.');
+              window.location.reload();
+          }
+        })
+        .catch(error => {
+          console.error('فشل في التحقق الدوري:', error);
+        });
+    }
+
+    let periodicCheckInterval;
+    function startPeriodicCheck() {
+      if(periodicCheckInterval) clearInterval(periodicCheckInterval);
+      periodicCheckInterval = setInterval(checkRevocationStatus, fiveMinutesInMs);
+    }
+    
+    function validateAndEnter() {
+        const nameInput = document.getElementById('welcomeNameInput');
+        const name = nameInput.value.trim();
+        
+        if (name.length < 5) {
+            alert('يرجى كتابة الاسم الثلاثي بشكل صحيح.');
+            return;
+        }
+        
+        localStorage.setItem('studentName', name);
+        enterFreeMode();
+    }
+
+    function enterFreeMode() {
+        localStorage.setItem('hasAgreedToWarning', 'true');
+
+        closeModal('warningModal'); 
+        document.getElementById('appContent').style.display = 'block';
+        document.body.style.overflow = 'auto';
+
+        loadData().then(() => {
+             const freeCourses = allTeachers.filter(t => t.isPaid === false);
+             renderTeachers(freeCourses); 
+             renderMaterials([]);
+             renderExams([]);
+             allMaterials = []; 
+             allExams = []; 
+        });
+        
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector('.nav-btn[onclick="loadContent(\'lectures\')]');
+        if (activeBtn) activeBtn.classList.add('active');
+
+        navigate('home');
+        document.getElementById('studentCounter').style.display = 'none';
+        document.getElementById('floatingContactBtn').style.display = 'flex';
+        document.getElementById('showLoginModalBtn').style.display = 'block';
+    }
+
+    function showUpgradeModal() {
+        openModal('upgradeModal');
+    }
+
+    let accessCodeDatabase = {};
+    const DEMO_CODE = 'DEMO'; 
+    
+    function loginSuccess(code, name, phone) {
+        localStorage.setItem('userAccessCode', code);
+        localStorage.setItem('isPaidUser', 'true');
+        localStorage.setItem('studentName', name);
+        localStorage.setItem('studentPhone', phone);
+        
+        closeModal('loginModal');
+        document.getElementById('appContent').style.display = 'block';
+        document.body.style.overflow = 'auto';
+        document.getElementById('accessError').style.display = 'none';
+        document.getElementById('floatingContactBtn').style.display = 'flex';
+
+        loadData().then(() => {
+             document.getElementById('showLoginModalBtn').style.display = 'none';
+             
+             const paidCourses = allTeachers.filter(t => t.isPaid !== false);
+             renderTeachers(paidCourses);
+             
+             renderMaterials(allMaterials);
+             renderExams(allExams);
+             
+             navButtons.forEach(btn => btn.classList.remove('active'));
+             const activeBtn = document.querySelector('.nav-btn[onclick="loadContent(\'lectures\')]');
+             if (activeBtn) activeBtn.classList.add('active');
+
+             navigate('home');
+             
+             const watermark = document.getElementById('videoWatermark');
+             if (watermark) {
+                 watermark.textContent = `${name} - ${phone}`;
+             }
+             
+             startPeriodicCheck();
+        });
+    }
+    
+    function checkAutoLogin() {
+        const isPaid = localStorage.getItem('isPaidUser') === 'true';
+        const savedCode = localStorage.getItem('userAccessCode');
+        const hasAgreed = localStorage.getItem('hasAgreedToWarning') === 'true';
+        
+        if (isPaid && savedCode) {
+            if (savedCode === DEMO_CODE && window.location.protocol === 'file:') {
+                 loginSuccess(savedCode, 'طالب تجريبي', '00000000000');
+                 return;
+            }
+            
+            if (accessCodeDatabase.hasOwnProperty(savedCode)) {
+                 const savedName = localStorage.getItem('studentName') || 'N/A';
+                 const savedPhone = localStorage.getItem('studentPhone') || 'N/A';
+                 loginSuccess(savedCode, savedName, savedPhone);
+                 return; 
+            }
+        }
+        
+        openModal('warningModal');
+        const savedName = localStorage.getItem('studentName');
+        if (savedName) {
+            document.getElementById('welcomeNameInput').value = savedName;
+        }
+    }
+    
+    function loadAccessCodes() {
+        const isLocalFile = window.location.protocol === 'file:';
+        const counterElement = document.getElementById('studentCounter');
+        
+        if (isLocalFile) {
+            if (counterElement) counterElement.style.display = 'none';
+            accessCodeDatabase = {
+                [DEMO_CODE]: { active: false, studentName: null, studentPhone: null }
+            };
+            checkAutoLogin();
+            return;
+        }
+
+        fetch('sys-config-v2.json?t=' + Date.now())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('فشل تحميل ملف الإعدادات.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                accessCodeDatabase = data;
+                updateStudentCounter(data);
+                checkAutoLogin();
+            })
+            .catch(err => {
+                checkAutoLogin();
+                if (counterElement) counterElement.style.display = 'none';
+            });
+    }
+
+    function checkAccessCode() {
+        const nameInput = document.getElementById('studentNameInput');
+        const phoneInput = document.getElementById('studentPhoneInput');
+        const codeInput = document.getElementById('codeInput');
+        const errorElement = document.getElementById('accessError');
+
+        const studentName = nameInput.value.trim();
+        const studentPhone = phoneInput.value.trim();
+        const enteredCode = codeInput.value.trim().toUpperCase();
+
+        if (!studentName || !studentPhone || !enteredCode) {
+            errorElement.innerText = 'يرجى ملء جميع الحقول.';
+            errorElement.style.display = 'block';
+            return;
+        }
+
+        errorElement.style.display = 'none';
+        
+        if (enteredCode === DEMO_CODE && window.location.protocol === 'file:') {
+            alert("تم تسجيل الدخول بنجاح! سيتم تحويلك للمحتوى المدفوع.");
+            loginSuccess(enteredCode, studentName, studentPhone);
+            return;
+        }
+        
+        if (accessCodeDatabase.hasOwnProperty(enteredCode)) {
+            const codeDetails = accessCodeDatabase[enteredCode];
+
+            if (codeDetails.active === false) {
+                alert(`تم تفعيل الكود بنجاح. أهلاً بك يا ${studentName}`);
+                loginSuccess(enteredCode, studentName, studentPhone);
+            } else {
+                errorElement.innerText = 'هذا الكود مستخدم بالفعل من قبل طالب آخر.';
+                errorElement.style.display = 'block';
+            }
+        } else {
+            errorElement.innerText = 'كود الدخول غير صحيح. حاول مرة أخرى.';
+            errorElement.style.display = 'block';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (screen.orientation && screen.orientation.lock) {
+          try {
+             screen.orientation.lock('portrait').catch(e => {});
+          } catch(e) {}
+      }
+
+      initializeTheme();
+      document.getElementById('loginModal').style.display = 'none';
+      document.getElementById('appContent').style.display = 'none';
+      document.getElementById('floatingContactBtn').style.display = 'none'; 
+      document.body.style.overflow = 'hidden';
+      
+      loadAccessCodes();
+    });
+  </script>
+  <script>
+    // === تفعيل الإشعارات بالجهاز ===
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then((reg) => {
+          console.log("Service Worker Registered");
+          // طلب صلاحية الإشعارات تلقائياً من الطالب
+          if (Notification && Notification.permission !== "granted") {
+            Notification.requestPermission().then(permission => {
+              if (permission === "granted") {
+                console.log("تم السماح بالإشعارات.");
+              }
+            });
+          }
+        })
+        .catch(err => console.error("SW registration failed", err));
+    }
+
+    // دالة تجريبية لإرسال إشعار عند تنزيل أو إضافة محاضرة جديدة
+    function sendNewLectureNotification(lectureTitle) {
+      if (navigator.serviceWorker && Notification.permission === "granted") {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification("محاضرة جديدة تم تنزيلها!", {
+            body: lectureTitle,
+            icon: "https://j.top4top.io/p_3598vdrdp1.jpg",
+            badge: "https://j.top4top.io/p_3598vdrdp1.jpg"
+          });
+        });
+      }
+    }
+  </script>
+ </body>
+</html>
