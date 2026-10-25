@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام استعلام درجات الطلاب (السحابي)</title>
+    <title>نظام استعلام درجات الطلاب (متصل بـ Firebase)</title>
     <!-- استدعاء Tailwind CSS للتصميم العصري -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- استدعاء مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
@@ -30,12 +33,12 @@
     <!-- المحتوى الرئيسي -->
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
         
-        <!-- شاشة تسجيل دخول أو تسجيل طالب جديد -->
+        <!-- شاشة تسجيل أو استعلام الطالب -->
         <div id="student-login-card" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
             <div class="mb-6">
                 <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full">بوابة الطالب الآمنة</span>
-                <h2 class="text-2xl font-bold text-gray-800 mt-2">استعلم أو تسجل للنظام</h2>
-                <p class="text-gray-500 text-sm mt-1">أدخل الرمز السري للاستعلام، أو سجل بياناتك لأول مرة</p>
+                <h2 class="text-2xl font-bold text-gray-800 mt-2">استعلم أو سجل بياناتك</h2>
+                <p class="text-gray-500 text-sm mt-1">أدخل اسمك ورمزك السري للتسجيل لأول مرة، أو الرمز للاستعلام</p>
             </div>
 
             <div class="space-y-4">
@@ -167,49 +170,23 @@
         </div>
     </div>
 
-    <!-- سكربت التشغيل والربط السحابي (JSONBin) -->
+    <!-- سكربت الربط والتشغيل (Firebase Realtime Database) -->
     <script>
-        const BIN_ID = "6ade4c88ac6210605a515a61";
-        const API_KEY = "$2a$10$s.Rlcw0PNdSYRKKJksOF5uflBTeCyqokAUosILovDr5Nr28Rygzje";
-        
+        const firebaseConfig = {
+            databaseURL: "https://student-grades-1fe83-default-rtdb.firebaseio.com/"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const rtdb = firebase.database();
+
         const subjectsList = [
             "التربية الإسلامية", "اللغة العربية", "اللغة الإنجليزية", 
             "الرياضيات", "الاجتماعيات", "العلوم"
         ];
 
-        let currentEditingCode = null;
+        let currentEditingStudentKey = null;
 
-        async function fetchDatabase() {
-            try {
-                let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                    headers: { "X-Master-Key": API_KEY }
-                });
-                let data = await res.json();
-                return data.record.students || {};
-            } catch (err) {
-                console.error("خطأ في الاتصال بالسحابة", err);
-                return {};
-            }
-        }
-
-        async function saveDatabase(studentsData) {
-            try {
-                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Master-Key": API_KEY
-                    },
-                    body: JSON.stringify({ students: studentsData })
-                });
-                return true;
-            } catch (err) {
-                console.error("خطأ في الحفظ السحابي", err);
-                return false;
-            }
-        }
-
-        async function registerStudent() {
+        function registerStudent() {
             let name = document.getElementById("student-name-reg").value.trim();
             let code = document.getElementById("student-pin").value.trim();
             
@@ -218,40 +195,47 @@
                 return;
             }
 
-            let students = await fetchDatabase();
-            if(students[code]) {
-                alert("الرمز السري مستخدم مسبقاً، يجوز لك الاستعلام مباشرة أو اختيار رمز آخر!");
-                return;
-            }
+            rtdb.ref("students").orderByChild("code").equalTo(code).once("value", (snapshot) => {
+                if (snapshot.exists()) {
+                    alert("الرمز السري مستخدم مسبقاً، يجوز لك الاستعلام مباشرة أو اختيار رمز آخر!");
+                    return;
+                }
 
-            students[code] = {
-                name: name,
-                code: code,
-                grades: {}
-            };
-
-            let success = await saveDatabase(students);
-            if(success) {
-                alert("تم تسجيل حسابك بنجاح! يمكنك الآن الضغط على عرض النتيجة.");
-            } else {
-                alert("حدث خطأ أثناء الاتصال بالسحابة.");
-            }
+                let newRef = rtdb.ref("students").push();
+                newRef.set({
+                    name: name,
+                    code: code,
+                    grades: {}
+                }, (error) => {
+                    if(error) {
+                        alert("حدث خطأ أثناء التسجيل!");
+                    } else {
+                        alert("تم تسجيل حسابك بنجاح! يمكنك الآن الضغط على عرض النتيجة.");
+                    }
+                });
+            });
         }
 
-        async function searchStudent() {
+        function searchStudent() {
             let pin = document.getElementById("student-pin").value.trim();
             if(!pin) {
                 alert("يرجى إدخال الرمز السري!");
                 return;
             }
 
-            let students = await fetchDatabase();
-            if (!students[pin]) {
-                alert("الرمز السري غير صحيح أو لم تقم بالتسجيل بعد!");
-                return;
-            }
+            rtdb.ref("students").orderByChild("code").equalTo(pin).once("value", (snapshot) => {
+                if (!snapshot.exists()) {
+                    alert("الرمز السري غير صحيح أو لم تقم بالتسجيل بعد!");
+                    return;
+                }
 
-            displayStudentReport(students[pin]);
+                let studentData = null;
+                snapshot.forEach((childSnapshot) => {
+                    studentData = childSnapshot.val();
+                });
+
+                displayStudentReport(studentData);
+            });
         }
 
         function displayStudentReport(data) {
@@ -327,80 +311,78 @@
 
         function closeDashboard() { document.getElementById("teacher-dashboard").classList.add("hidden"); }
 
-        async function loadTeacherStudentsList() {
-            let students = await fetchDatabase();
-            let listBody = document.getElementById("teacher-students-list");
-            listBody.innerHTML = "";
-            
-            let keys = Object.keys(students);
-            if (keys.length === 0) {
-                listBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">لا يوجد طلاب مسجلون حالياً.</td></tr>`;
-                return;
-            }
+        function loadTeacherStudentsList() {
+            rtdb.ref("students").once("value", (snapshot) => {
+                let listBody = document.getElementById("teacher-students-list");
+                listBody.innerHTML = "";
+                
+                if (!snapshot.exists()) {
+                    listBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">لا يوجد طلاب مسجلون حالياً.</td></tr>`;
+                    return;
+                }
 
-            keys.forEach(code => {
-                let val = students[code];
-                listBody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-3 font-medium text-gray-800">${val.name}</td>
-                        <td class="p-3 font-mono font-bold text-indigo-600">${val.code}</td>
-                        <td class="p-3 text-center space-x-2 space-x-reverse">
-                            <button onclick="openEditGrades('${code}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📝 تعديل الدرجات</button>
-                            <button onclick="deleteStudent('${code}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">🗑️ حذف</button>
-                        </td>
-                    </tr>
-                `;
+                snapshot.forEach((childSnapshot) => {
+                    let key = childSnapshot.key;
+                    let val = childSnapshot.val();
+
+                    listBody.innerHTML += `
+                        <tr class="border-b">
+                            <td class="p-3 font-medium text-gray-800">${val.name}</td>
+                            <td class="p-3 font-mono font-bold text-indigo-600">${val.code}</td>
+                            <td class="p-3 text-center space-x-2 space-x-reverse">
+                                <button onclick="openEditGrades('${key}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📝 تعديل الدرجات</button>
+                                <button onclick="deleteStudent('${key}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">🗑️ حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                });
             });
         }
 
-        async function deleteStudent(code) {
+        function deleteStudent(key) {
             if(confirm("هل أنت متأكد من حذف هذا الطالب نهائياً؟")) {
-                let students = await fetchDatabase();
-                delete students[code];
-                await saveDatabase(students);
-                loadTeacherStudentsList();
+                rtdb.ref("students/" + key).remove().then(() => {
+                    loadTeacherStudentsList();
+                });
             }
         }
 
-        async function openEditGrades(code) {
-            currentEditingCode = code;
-            let students = await fetchDatabase();
-            let data = students[code];
-            
-            document.getElementById("edit-modal-title").innerText = "تعديل درجات الطالب: " + data.name;
-            
-            let container = document.getElementById("grades-inputs-container");
-            container.innerHTML = "";
+        function openEditGrades(key) {
+            currentEditingStudentKey = key;
+            rtdb.ref("students/" + key).once("value", (snapshot) => {
+                let data = snapshot.val();
+                document.getElementById("edit-modal-title").innerText = "تعديل درجات الطالب: " + data.name;
+                
+                let container = document.getElementById("grades-inputs-container");
+                container.innerHTML = "";
 
-            subjectsList.forEach(subject => {
-                let g = data.grades && data.grades[subject] ? data.grades[subject] : {c1m1:0, c1m2:0, mid:0, c2m1:0, c2m2:0};
-                container.innerHTML += `
-                    <div class="bg-slate-50 p-3 rounded-xl border">
-                        <h4 class="font-bold text-indigo-900 mb-2 text-sm">${subject}</h4>
-                        <div class="grid grid-cols-5 gap-2 text-xs">
-                            <div><label class="block text-gray-500 mb-1">شهر 1 ك1</label><input type="number" data-sub="${subject}" data-field="c1m1" value="${g.c1m1}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
-                            <div><label class="block text-gray-500 mb-1">شهر 2 ك1</label><input type="number" data-sub="${subject}" data-field="c1m2" value="${g.c1m2}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
-                            <div><label class="block text-gray-500 mb-1">نصف السنة</label><input type="number" data-sub="${subject}" data-field="mid" value="${g.mid}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
-                            <div><label class="block text-gray-500 mb-1">شهر 1 ك2</label><input type="number" data-sub="${subject}" data-field="c2m1" value="${g.c2m1}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
-                            <div><label class="block text-gray-500 mb-1">شهر 2 ك2</label><input type="number" data-sub="${subject}" data-field="c2m2" value="${g.c2m2}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                subjectsList.forEach(subject => {
+                    let g = data.grades && data.grades[subject] ? data.grades[subject] : {c1m1:0, c1m2:0, mid:0, c2m1:0, c2m2:0};
+                    container.innerHTML += `
+                        <div class="bg-slate-50 p-3 rounded-xl border">
+                            <h4 class="font-bold text-indigo-900 mb-2 text-sm">${subject}</h4>
+                            <div class="grid grid-cols-5 gap-2 text-xs">
+                                <div><label class="block text-gray-500 mb-1">شهر 1 ك1</label><input type="number" data-sub="${subject}" data-field="c1m1" value="${g.c1m1}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                                <div><label class="block text-gray-500 mb-1">شهر 2 ك1</label><input type="number" data-sub="${subject}" data-field="c1m2" value="${g.c1m2}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                                <div><label class="block text-gray-500 mb-1">نصف السنة</label><input type="number" data-sub="${subject}" data-field="mid" value="${g.mid}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                                <div><label class="block text-gray-500 mb-1">شهر 1 ك2</label><input type="number" data-sub="${subject}" data-field="c2m1" value="${g.c2m1}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                                <div><label class="block text-gray-500 mb-1">شهر 2 ك2</label><input type="number" data-sub="${subject}" data-field="c2m2" value="${g.c2m2}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                            </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
 
-            document.getElementById("edit-grades-modal").classList.remove("hidden");
+                document.getElementById("edit-grades-modal").classList.remove("hidden");
+            });
         }
 
         function closeEditModal() {
             document.getElementById("edit-grades-modal").classList.add("hidden");
-            currentEditingCode = null;
+            currentEditingStudentKey = null;
         }
 
-        async function saveStudentGrades() {
-            if(!currentEditingCode) return;
-
-            let students = await fetchDatabase();
-            if(!students[currentEditingCode]) return;
+        function saveStudentGrades() {
+            if(!currentEditingStudentKey) return;
 
             let inputs = document.querySelectorAll(".grade-input");
             let newGrades = {};
@@ -416,15 +398,14 @@
                 newGrades[sub][field] = val;
             });
 
-            students[currentEditingCode].grades = newGrades;
-
-            let success = await saveDatabase(students);
-            if(success) {
-                alert("تم حفظ الدرجات بنجاح في السحابة!");
-                closeEditModal();
-            } else {
-                alert("حدث خطأ أثناء الحفظ!");
-            }
+            rtdb.ref("students/" + currentEditingStudentKey + "/grades").set(newGrades, (error) => {
+                if(error) {
+                    alert("حدث خطأ أثناء الحفظ!");
+                } else {
+                    alert("تم حفظ الدرجات بنجاح في السحابة!");
+                    closeEditModal();
+                }
+            });
         }
     </script>
 </body>
