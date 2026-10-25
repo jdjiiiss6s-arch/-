@@ -45,10 +45,23 @@
     <div id="teacher-dashboard" class="hidden container mx-auto p-4 sm:p-8 flex-grow">
         <div class="max-w-6xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 transition-colors duration-300">
             <div class="flex justify-between items-center border-b dark:border-slate-800 pb-4 mb-6">
-                <h2 class="text-2xl font-bold text-indigo-900 dark:text-indigo-300">📋 إدارة طلاب السادس العلمي والدرجات</h2>
+                <h2 class="text-2xl font-bold text-indigo-900 dark:text-indigo-300">📋 إدارة طلاب السادس العلمي حسب الشعب</h2>
                 <button onclick="location.reload()" class="bg-red-100 dark:bg-red-950/60 hover:bg-red-200 dark:hover:bg-red-900 text-red-700 dark:text-red-300 px-4 py-2 rounded-xl text-sm font-bold transition">
                     تسجيل خروج ✕
                 </button>
+            </div>
+
+            <!-- أزرار عزل وتصفية الشعب -->
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">📁 تصفية الطلاب حسب الشعبة:</label>
+                <div class="flex flex-wrap gap-2" id="section-tabs">
+                    <button onclick="filterBySection('ALL')" class="section-btn active-tab bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md transition">جميع الشعب</button>
+                    <button onclick="filterBySection('أ')" class="section-btn bg-slate-200 dark:bg-slate-800 text-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">الشعبة ( أ )</button>
+                    <button onclick="filterBySection('ب')" class="section-btn bg-slate-200 dark:bg-slate-800 text-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">الشعبة ( ب )</button>
+                    <button onclick="filterBySection('ج')" class="section-btn bg-slate-200 dark:bg-slate-800 text-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">الشعبة ( ج )</button>
+                    <button onclick="filterBySection('د')" class="section-btn bg-slate-200 dark:bg-slate-800 text-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">الشعبة ( د )</button>
+                    <button onclick="filterBySection('هـ')" class="section-btn bg-slate-200 dark:bg-slate-800 text-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">الشعبة ( هـ )</button>
+                </div>
             </div>
 
             <!-- حقل البحث بالاسم في لوحة تحكم المدرس -->
@@ -58,13 +71,18 @@
             </div>
 
             <!-- قائمة الطلاب المسجلين -->
-            <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">الطلاب المسجلون في السحابة:</h3>
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200">الطلاب المعروضون:</h3>
+                <span id="current-section-label" class="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300 text-xs font-bold px-3 py-1 rounded-full">عرض: جميع الشعب</span>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-right border-collapse">
                     <thead>
                         <tr class="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-sm">
                             <th class="p-3 border dark:border-slate-700">اسم الطالب</th>
-                            <th class="p-3 border dark:border-slate-700">الرمز السري</th>
+                            <th class="p-3 border dark:border-slate-700 text-center">الشعبة</th>
+                            <th class="p-3 border dark:border-slate-700 text-center">الرمز السري</th>
                             <th class="p-3 border dark:border-slate-700 text-center">إدارة الدرجات</th>
                         </tr>
                     </thead>
@@ -110,8 +128,9 @@
             "الاقتصاد"
         ];
 
-        let currentEditingStudentKey = null;
+        let currentEditingPath = null;
         let allStudentsData = [];
+        let selectedSection = "ALL";
 
         // التحقق من الوضع الليلي
         if (localStorage.getItem('theme') === 'dark') {
@@ -130,7 +149,6 @@
 
         function verifyTeacher() {
             let pass = document.getElementById("teacher-pass").value;
-            // كلمة المرور الجديدة المطلوبة بدقة
             if(pass === "635201919") {
                 document.getElementById("login-container").classList.add("hidden");
                 document.getElementById("teacher-dashboard").classList.remove("hidden");
@@ -144,15 +162,55 @@
             rtdb.ref("students").once("value", (snapshot) => {
                 allStudentsData = [];
                 if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        allStudentsData.push({
-                            key: childSnapshot.key,
-                            val: childSnapshot.val()
-                        });
+                    snapshot.forEach((sectionSnap) => {
+                        let secKey = sectionSnap.key;
+                        let secVal = sectionSnap.val();
+
+                        // إذا كانت البيانات مخزنة تحت شعبة مباشرة
+                        if (typeof secVal === 'object') {
+                            Object.keys(secVal).forEach(studentKey => {
+                                let st = secVal[studentKey];
+                                // التحقق هل هو كائن طالب فعلي
+                                if (st && st.name) {
+                                    allStudentsData.push({
+                                        path: "students/" + secKey + "/" + studentKey,
+                                        key: studentKey,
+                                        section: st.section || secKey,
+                                        val: st
+                                    });
+                                }
+                            });
+                        }
                     });
                 }
-                renderStudentsTable(allStudentsData);
+                filterTeacherStudents();
             });
+        }
+
+        function filterBySection(sec) {
+            selectedSection = sec;
+            
+            // التعديل في ألوان الأزرار لإظهار الشعبة المحددة
+            let buttons = document.querySelectorAll(".section-btn");
+            buttons.forEach(btn => {
+                btn.className = "section-btn bg-slate-200 dark:bg-slate-800 text-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition";
+            });
+            event.target.className = "section-btn active-tab bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md transition";
+
+            document.getElementById("current-section-label").innerText = sec === "ALL" ? "عرض: جميع الشعب" : "عرض: الشعبة (" + sec + ")";
+            filterTeacherStudents();
+        }
+
+        function filterTeacherStudents() {
+            let query = document.getElementById("teacher-search-input").value.trim().toLowerCase();
+            
+            let filtered = allStudentsData.filter(item => {
+                let matchesName = item.val.name.toLowerCase().includes(query);
+                let matchesSection = (selectedSection === "ALL") || (item.section === selectedSection);
+                return matchesName && matchesSection;
+            });
+
+            renderStudentsTable(filtered);
         }
 
         function renderStudentsTable(studentsArray) {
@@ -160,46 +218,41 @@
             listBody.innerHTML = "";
             
             if (studentsArray.length === 0) {
-                listBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">لا يوجد طلاب مسجلون أو مطابقين للبحث.</td></tr>`;
+                listBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">لا يوجد طلاب مسجلون في هذه الشعبة أو مطابقون للبحث.</td></tr>`;
                 return;
             }
 
             studentsArray.forEach((item) => {
-                let key = item.key;
                 let val = item.val;
+                let path = item.path;
 
                 listBody.innerHTML += `
                     <tr class="border-b dark:border-slate-800">
                         <td class="p-3 font-medium text-gray-800 dark:text-gray-200">${val.name}</td>
-                        <td class="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">${val.code}</td>
+                        <td class="p-3 text-center font-bold text-indigo-600 dark:text-indigo-400">الشعبة (${val.section || 'غير محدد'})</td>
+                        <td class="p-3 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">${val.code}</td>
                         <td class="p-3 text-center space-x-2 space-x-reverse">
-                            <button onclick="openEditGrades('${key}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📝 تعديل الدرجات</button>
-                            <button onclick="deleteStudent('${key}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">🗑️ حذف</button>
+                            <button onclick="openEditGrades('${path}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📝 تعديل الدرجات</button>
+                            <button onclick="deleteStudent('${path}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">🗑️ حذف</button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        function filterTeacherStudents() {
-            let query = document.getElementById("teacher-search-input").value.trim().toLowerCase();
-            let filtered = allStudentsData.filter(item => item.val.name.toLowerCase().includes(query));
-            renderStudentsTable(filtered);
-        }
-
-        function deleteStudent(key) {
+        function deleteStudent(path) {
             if(confirm("هل أنت متأكد من حذف هذا الطالب نهائياً؟")) {
-                rtdb.ref("students/" + key).remove().then(() => {
+                rtdb.ref(path).remove().then(() => {
                     loadTeacherStudentsList();
                 });
             }
         }
 
-        function openEditGrades(key) {
-            currentEditingStudentKey = key;
-            rtdb.ref("students/" + key).once("value", (snapshot) => {
+        function openEditGrades(path) {
+            currentEditingPath = path;
+            rtdb.ref(path).once("value", (snapshot) => {
                 let data = snapshot.val();
-                document.getElementById("edit-modal-title").innerText = "تعديل درجات الطالب: " + data.name;
+                document.getElementById("edit-modal-title").innerText = "تعديل درجات الطالب: " + data.name + " - الشعبة (" + (data.section || 'أ') + ")";
                 
                 let container = document.getElementById("grades-inputs-container");
                 container.innerHTML = "";
@@ -226,11 +279,11 @@
 
         function closeEditModal() {
             document.getElementById("edit-grades-modal").classList.add("hidden");
-            currentEditingStudentKey = null;
+            currentEditingPath = null;
         }
 
         function saveStudentGrades() {
-            if(!currentEditingStudentKey) return;
+            if(!currentEditingPath) return;
 
             let inputs = document.querySelectorAll(".grade-input");
             let newGrades = {};
@@ -246,12 +299,13 @@
                 newGrades[sub][field] = val;
             });
 
-            rtdb.ref("students/" + currentEditingStudentKey + "/grades").set(newGrades, (error) => {
+            rtdb.ref(currentEditingPath + "/grades").set(newGrades, (error) => {
                 if(error) {
                     alert("حدث خطأ أثناء الحفظ!");
                 } else {
                     alert("تم حفظ الدرجات بنجاح في السحابة!");
                     closeEditModal();
+                    loadTeacherStudentsList();
                 }
             });
         }
