@@ -3,244 +3,428 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة النتائج الامتحانية</title>
+    <title>نظام استعلام درجات الطلاب (السحابي)</title>
+    <!-- استدعاء Tailwind CSS للتصميم العصري -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Cairo', sans-serif; }</style>
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+        }
+    </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col justify-between">
 
+    <!-- الهيدر -->
     <header class="bg-indigo-600 text-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">🎓 منصة النتائج الامتحانية</h1>
-            <div class="space-x-2 space-x-reverse">
-                <button onclick="showSection('login')" class="bg-indigo-700 px-3 py-1.5 rounded-lg text-sm">دخول الطالب</button>
-                <button onclick="showSection('register')" class="bg-emerald-600 px-3 py-1.5 rounded-lg text-sm">تسجيل طالب جديد</button>
-                <button onclick="openTeacherModal()" class="bg-amber-600 px-3 py-1.5 rounded-lg text-sm">⚙️ لوحة المدرس</button>
-            </div>
+            <h1 class="text-xl font-bold">🎓 النظام الإلكتروني لاستعلام الدرجات</h1>
+            <button onclick="openTeacherModal()" class="bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg text-sm transition">
+                ⚙️ لوحة تحكم المدرس
+            </button>
         </div>
     </header>
 
+    <!-- المحتوى الرئيسي -->
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
         
-        <!-- 1. شاشة تسجيل دخول الطالب -->
-        <div id="section-login" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">استعلام عن النتيجة</h2>
-            <p class="text-gray-500 text-sm mb-6">أدخل الرمز السري الخاص بك لعرض الشهادة</p>
-            <input type="password" id="login-pin" placeholder="الرمز السري" class="w-full px-4 py-3 border rounded-xl text-center mb-4 focus:ring-2 focus:ring-indigo-500">
-            <button onclick="studentLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition">عرض النتيجة</button>
-        </div>
+        <!-- شاشة تسجيل دخول أو تسجيل طالب جديد -->
+        <div id="student-login-card" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+            <div class="mb-6">
+                <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full">بوابة الطالب الآمنة</span>
+                <h2 class="text-2xl font-bold text-gray-800 mt-2">استعلم أو تسجل للنظام</h2>
+                <p class="text-gray-500 text-sm mt-1">أدخل الرمز السري للاستعلام، أو سجل بياناتك لأول مرة</p>
+            </div>
 
-        <!-- 2. شاشة تسجيل حساب جديد للطالب -->
-        <div id="section-register" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">تسجيل حساب جديد</h2>
-            <p class="text-gray-500 text-sm mb-6 text-center">اكتب اسمك ورمزك السري الخاص</p>
             <div class="space-y-4">
-                <input type="text" id="reg-name" placeholder="اسم الطالب الثلاثي" class="w-full px-4 py-3 border rounded-xl">
-                <input type="password" id="reg-pin" placeholder="اختر رمزاً سرياً خاصاً بك" class="w-full px-4 py-3 border rounded-xl">
-                <button onclick="studentRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition">تسجيل الحساب</button>
+                <div>
+                    <input type="text" id="student-name-reg" placeholder="اسم الطالب الكامل (عند التسجيل لأول مرة)" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-md focus:ring-2 focus:ring-indigo-500 focus:outline-none mb-3">
+                    <input type="password" id="student-pin" placeholder="أدخل الرمز السري (مثال: 1234)" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tracking-widest focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="registerStudent()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
+                        ✍️ تسجيل جديد
+                    </button>
+                    <button onclick="searchStudent()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
+                        🔍 عرض النتيجة
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- 3. شاشة عرض شهادة الطالب -->
-        <div id="section-report" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-3xl hidden">
+        <!-- شاشة عرض الشهادة -->
+        <div id="student-report-card" class="hidden bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-3xl">
             <div class="flex justify-between items-center border-b pb-4 mb-6">
                 <div>
-                    <h3 id="rep-name" class="text-2xl font-bold text-gray-800"></h3>
-                    <p class="text-gray-500 text-sm">حالة الدخول الوزاري: <span id="rep-status" class="font-bold"></span></p>
+                    <h3 id="rep-name" class="text-2xl font-bold text-gray-800">اسم الطالب</h3>
+                    <p class="text-gray-500 text-sm mt-1">الرمز السري: <span id="rep-code" class="font-mono font-bold"></span></p>
                 </div>
-                <button onclick="showSection('login')" class="bg-gray-100 px-4 py-2 rounded-lg text-sm">خروج</button>
+                <button onclick="logoutStudent()" class="no-print bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition">
+                    ← خروج
+                </button>
             </div>
-            <div class="overflow-x-auto mb-4">
-                <table class="w-full text-right border-collapse text-sm">
+
+            <!-- جدول الدرجات -->
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-right border-collapse">
                     <thead>
-                        <tr class="bg-indigo-50 text-indigo-900">
-                            <th class="p-3 border">المادة</th>
-                            <th class="p-3 border text-center">سعي أول</th>
+                        <tr class="bg-indigo-50 text-indigo-900 text-sm">
+                            <th class="p-3 border">المادة الدراسية</th>
+                            <th class="p-3 border text-center">شهر 1</th>
+                            <th class="p-3 border text-center">شهر 2</th>
+                            <th class="p-3 border text-center font-bold">سعي ك1</th>
                             <th class="p-3 border text-center">نصف السنة</th>
-                            <th class="p-3 border text-center">سعي ثاني</th>
-                            <th class="p-3 border text-center bg-indigo-100">المعدل النهائي</th>
+                            <th class="p-3 border text-center">شهر 1 (ك2)</th>
+                            <th class="p-3 border text-center">شهر 2 (ك2)</th>
+                            <th class="p-3 border text-center font-bold">سعي ك2</th>
+                            <th class="p-3 border text-center font-black bg-indigo-100">المعدل النهائي</th>
                         </tr>
                     </thead>
-                    <tbody id="rep-grades-body"></tbody>
+                    <tbody id="grades-table-body" class="text-gray-700 text-sm">
+                        <!-- يتم تعبئتها برمجياً -->
+                    </tbody>
                 </table>
             </div>
-            <div class="text-center bg-slate-50 p-3 rounded-xl font-bold">
-                المعدل العام: <span id="rep-general-avg" class="text-indigo-600 text-lg">0%</span>
+
+            <!-- ملخص المعدل والدخول الوزاري -->
+            <div class="bg-slate-50 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+                <div>
+                    <span class="text-gray-600 text-sm">المعدل العام السنوي: </span>
+                    <span id="overall-average" class="text-xl font-black text-indigo-600">0%</span>
+                </div>
+                <div>
+                    <span class="text-gray-600 text-sm">حالة الدخول الوزاري: </span>
+                    <span id="ministerial-status" class="px-3 py-1 rounded-full text-xs font-bold">جاري الحساب...</span>
+                </div>
+            </div>
+
+            <!-- زر الطباعة -->
+            <div class="text-center no-print">
+                <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-md">
+                    🖨️ طباعة الشهادة / حفظ PDF
+                </button>
             </div>
         </div>
 
     </main>
 
-    <!-- نافذة دخول المدرس -->
+    <!-- نافذة تسجيل دخول المدرس -->
     <div id="teacher-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">دخول لوحة تحكم المدرس</h3>
-            <input type="password" id="teacher-pass" placeholder="كلمة المرور (admin123)" class="w-full px-4 py-3 border rounded-xl mb-4">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">🔐 دخول لوحة تحكم المدرس</h3>
+            <input type="password" id="teacher-pass" placeholder="كلمة مرور المشرف (admin123)" class="w-full px-4 py-3 border rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <div class="flex justify-end gap-2">
-                <button onclick="closeTeacherModal()" class="px-4 py-2 bg-gray-100 rounded-xl">إلغاء</button>
-                <button onclick="verifyTeacher()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold">دخول</button>
+                <button onclick="closeTeacherModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm">إلغاء</button>
+                <button onclick="verifyTeacher()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold">دخول</button>
             </div>
         </div>
     </div>
 
-    <!-- لوحة تحكم المدرس -->
-    <div id="teacher-dashboard" class="fixed inset-0 bg-slate-100 hidden z-50 overflow-y-auto p-4">
-        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-6">
+    <!-- لوحة تحكم المدرس الرئيسية -->
+    <div id="teacher-dashboard" class="fixed inset-0 bg-slate-100 hidden z-50 overflow-y-auto p-4 sm:p-8">
+        <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-6">
             <div class="flex justify-between items-center border-b pb-4 mb-6">
-                <h2 class="text-xl font-bold text-indigo-900">🛠️ لوحة تحكم المدرس (تعديل درجات الطلاب)</h2>
-                <button onclick="closeDashboard()" class="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-sm font-bold">إغلاق ✕</button>
+                <h2 class="text-2xl font-bold text-indigo-900">🛠️ لوحة تحكم المدرس والإدارة</h2>
+                <button onclick="closeDashboard()" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-bold transition">
+                    إغلاق اللوحة ✕
+                </button>
             </div>
-            <div id="teacher-students-container" class="space-y-4"></div>
+
+            <!-- قائمة الطلاب المسجلين -->
+            <h3 class="font-bold text-gray-800 mb-3">📋 الطلاب المسجلون في السحابة:</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-700 text-sm">
+                            <th class="p-3 border">اسم الطالب</th>
+                            <th class="p-3 border">الرمز السري</th>
+                            <th class="p-3 border text-center">إدارة الدرجات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-students-list" class="text-sm">
+                        <!-- يمتلئ من السيرفر -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
+    <!-- نافذة تعديل درجات طالب معين -->
+    <div id="edit-grades-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl my-8">
+            <h3 id="edit-modal-title" class="text-xl font-bold text-indigo-900 mb-4">تعديل درجات الطالب</h3>
+            <div id="grades-inputs-container" class="space-y-3 max-h-96 overflow-y-auto p-2">
+                <!-- حقول الدرجات للمواد -->
+            </div>
+            <div class="flex justify-end gap-2 mt-6 border-t pt-4">
+                <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm">إلغاء</button>
+                <button onclick="saveStudentGrades()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold">حفظ التعديلات في السحابة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- سكربت التشغيل والربط السحابي (JSONBin) -->
     <script>
-        const firebaseConfig = { databaseURL: "https://student-grades-1fe83-default-rtdb.firebaseio.com/" };[cite: 1, 2]
-        firebase.initializeApp(firebaseConfig);
-        const rtdb = firebase.database();
+        const BIN_ID = "6ade4c88ac6210605a515a61";
+        const API_KEY = "$2a$10$s.Rlcw0PNdSYRKKJksOF5uflBTeCyqokAUosILovDr5Nr28Rygzje";
+        
+        const subjectsList = [
+            "التربية الإسلامية", "اللغة العربية", "اللغة الإنجليزية", 
+            "الرياضيات", "الاجتماعيات", "العلوم"
+        ];
 
-        const subjectsList = ["التربية الإسلامية", "اللغة العربية", "اللغة الإنجليزية", "الرياضيات", "الاجتماعيات", "العلوم"];
+        let currentEditingCode = null;
 
-        function showSection(section) {
-            document.getElementById('section-login').classList.add('hidden');
-            document.getElementById('section-register').classList.add('hidden');
-            document.getElementById('section-report').classList.add('hidden');
-            document.getElementById('section-' + section).classList.remove('hidden');
-        }
-
-        // تسجيل الطالب ببساطة وبدون تعقيد في البحث
-        function studentRegister() {
-            let name = document.getElementById('reg-name').value.trim();
-            let pin = document.getElementById('reg-pin').value.trim();
-            if(!name || !pin) { alert("يرجى ملء الحقول!"); return; }
-
-            let initialGrades = {};
-            subjectsList.forEach(sub => initialGrades[sub] = {c1:0, mid:0, c2:0});
-
-            let newRef = rtdb.ref("students").push();
-            newRef.set({ name: name, pin: pin, grades: initialGrades }, (error) => {
-                if(error) {
-                    alert("حدث خطأ أثناء الاتصال بقاعدة البيانات.");
-                } else {
-                    alert("تم إنشاء حسابك بنجاح! يمكنك تسجيل الدخول الآن.");
-                    document.getElementById('reg-name').value = "";
-                    document.getElementById('reg-pin').value = "";
-                    showSection('login');
-                }
-            });
-        }
-
-        // تسجيل دخول الطالب
-        function studentLogin() {
-            let pin = document.getElementById('login-pin').value.trim();
-            if(!pin) { alert("أدخل الرمز السري"); return; }
-
-            rtdb.ref("students").once("value", snapshot => {
-                if(!snapshot.exists()) { alert("لا توجد بيانات مسجلة بعد!"); return; }
-                
-                let foundStudent = null;
-                snapshot.forEach(child => {
-                    let val = child.val();
-                    if(val.pin === pin) {
-                        foundStudent = val;
-                    }
+        async function fetchDatabase() {
+            try {
+                let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { "X-Master-Key": API_KEY }
                 });
-
-                if(foundStudent) {
-                    displayReport(foundStudent);
-                } else {
-                    alert("الرمز السري غير صحيح!");
-                }
-            });
+                let data = await res.json();
+                return data.record.students || {};
+            } catch (err) {
+                console.error("خطأ في الاتصال بالسحابة", err);
+                return {};
+            }
         }
 
-        function displayReport(data) {
-            showSection('report');
-            document.getElementById('rep-name').innerText = data.name;
-            let tbody = document.getElementById('rep-grades-body');
-            tbody.innerHTML = "";
-            let total = 0;
+        async function saveDatabase(studentsData) {
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Master-Key": API_KEY
+                    },
+                    body: JSON.stringify({ students: studentsData })
+                });
+                return true;
+            } catch (err) {
+                console.error("خطأ في الحفظ السحابي", err);
+                return false;
+            }
+        }
 
-            subjectsList.forEach(sub => {
-                let g = data.grades && data.grades[sub] ? data.grades[sub] : {c1:0, mid:0, c2:0};
-                let subAvg = Math.round((Number(g.c1) + Number(g.mid) + Number(g.c2)) / 3);
-                total += subAvg;
+        async function registerStudent() {
+            let name = document.getElementById("student-name-reg").value.trim();
+            let code = document.getElementById("student-pin").value.trim();
+            
+            if(!name || !code) {
+                alert("يرجى إدخال اسم الطالب والرمز السري لتسجيل الحساب!");
+                return;
+            }
+
+            let students = await fetchDatabase();
+            if(students[code]) {
+                alert("الرمز السري مستخدم مسبقاً، يجوز لك الاستعلام مباشرة أو اختيار رمز آخر!");
+                return;
+            }
+
+            students[code] = {
+                name: name,
+                code: code,
+                grades: {}
+            };
+
+            let success = await saveDatabase(students);
+            if(success) {
+                alert("تم تسجيل حسابك بنجاح! يمكنك الآن الضغط على عرض النتيجة.");
+            } else {
+                alert("حدث خطأ أثناء الاتصال بالسحابة.");
+            }
+        }
+
+        async function searchStudent() {
+            let pin = document.getElementById("student-pin").value.trim();
+            if(!pin) {
+                alert("يرجى إدخال الرمز السري!");
+                return;
+            }
+
+            let students = await fetchDatabase();
+            if (!students[pin]) {
+                alert("الرمز السري غير صحيح أو لم تقم بالتسجيل بعد!");
+                return;
+            }
+
+            displayStudentReport(students[pin]);
+        }
+
+        function displayStudentReport(data) {
+            document.getElementById("student-login-card").classList.add("hidden");
+            document.getElementById("student-report-card").classList.remove("hidden");
+
+            document.getElementById("rep-name").innerText = data.name;
+            document.getElementById("rep-code").innerText = data.code;
+
+            let tbody = document.getElementById("grades-table-body");
+            tbody.innerHTML = "";
+
+            let totalGeneralSum = 0;
+            let subjectsCount = subjectsList.length;
+
+            subjectsList.forEach(subject => {
+                let g = data.grades && data.grades[subject] ? data.grades[subject] : {c1m1:0, c1m2:0, mid:0, c2m1:0, c2m2:0};
+                
+                let c1Saei = Math.round((Number(g.c1m1) + Number(g.c1m2)) / 2);
+                let c2Saei = Math.round((Number(g.c2m1) + Number(g.c2m2)) / 2);
+                let finalSubAvg = Math.round((c1Saei + Number(g.mid) + c2Saei) / 3);
+                totalGeneralSum += finalSubAvg;
+
                 tbody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-3 border font-semibold">${sub}</td>
-                        <td class="p-3 border text-center">${g.c1}</td>
+                    <tr class="border-b hover:bg-slate-50">
+                        <td class="p-3 border font-semibold text-gray-800">${subject}</td>
+                        <td class="p-3 border text-center">${g.c1m1}</td>
+                        <td class="p-3 border text-center">${g.c1m2}</td>
+                        <td class="p-3 border text-center font-bold text-indigo-600">${c1Saei}</td>
                         <td class="p-3 border text-center">${g.mid}</td>
-                        <td class="p-3 border text-center">${g.c2}</td>
-                        <td class="p-3 border text-center font-bold bg-indigo-50">${subAvg}%</td>
+                        <td class="p-3 border text-center">${g.c2m1}</td>
+                        <td class="p-3 border text-center">${g.c2m2}</td>
+                        <td class="p-3 border text-center font-bold text-indigo-600">${c2Saei}</td>
+                        <td class="p-3 border text-center font-black bg-indigo-50/50 text-indigo-900">${finalSubAvg}%</td>
                     </tr>
                 `;
             });
-            let general = Math.round(total / subjectsList.length);
-            document.getElementById('rep-general-avg').innerText = general + "%";
-            let status = document.getElementById('rep-status');
-            status.innerText = general >= 50 ? "مؤهل 🟢" : "غير مؤهل 🔴";
-            status.className = general >= 50 ? "text-emerald-600 font-bold" : "text-red-600 font-bold";
+
+            let generalAvg = Math.round(totalGeneralSum / subjectsCount);
+            document.getElementById("overall-average").innerText = generalAvg + "%";
+
+            let statusSpan = document.getElementById("ministerial-status");
+            if (generalAvg >= 50) {
+                statusSpan.innerText = "مؤهل للامتحانات الوزارية (ناجح) 🟢";
+                statusSpan.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800";
+            } else {
+                statusSpan.innerText = "غير مؤهل 🔴";
+                statusSpan.className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800";
+            }
         }
 
-        // لوحة المدرس
-        function openTeacherModal() { document.getElementById('teacher-modal').classList.remove('hidden'); }
-        function closeTeacherModal() { document.getElementById('teacher-modal').classList.add('hidden'); }
+        function logoutStudent() {
+            document.getElementById("student-report-card").classList.add("hidden");
+            document.getElementById("student-login-card").classList.remove("hidden");
+            document.getElementById("student-pin").value = "";
+            document.getElementById("student-name-reg").value = "";
+        }
+
+        function openTeacherModal() { document.getElementById("teacher-modal").classList.remove("hidden"); }
+        function closeTeacherModal() { document.getElementById("teacher-modal").classList.add("hidden"); }
+
         function verifyTeacher() {
-            if(document.getElementById('teacher-pass').value === "admin123") {
+            let pass = document.getElementById("teacher-pass").value;
+            if(pass === "admin123") {
                 closeTeacherModal();
-                document.getElementById('teacher-pass').value = "";
-                document.getElementById('teacher-dashboard').classList.remove('hidden');
-                loadTeacherDashboard();
-            } else { alert("كلمة المرور خطأ (الافتراضية: admin123)"); }
+                document.getElementById("teacher-pass").value = "";
+                document.getElementById("teacher-dashboard").classList.remove("hidden");
+                loadTeacherStudentsList();
+            } else {
+                alert("كلمة المرور خاطئة! (الافتراضية: admin123)");
+            }
         }
-        function closeDashboard() { document.getElementById('teacher-dashboard').classList.add('hidden'); }
 
-        function loadTeacherDashboard() {
-            rtdb.ref("students").once("value", snapshot => {
-                let container = document.getElementById('teacher-students-container');
-                container.innerHTML = "";
-                if(!snapshot.exists()) { container.innerHTML = "<p class='text-gray-500'>لا توجد حسابات مسجلة للطلاب بعد.</p>"; return; }
+        function closeDashboard() { document.getElementById("teacher-dashboard").classList.add("hidden"); }
 
-                snapshot.forEach(child => {
-                    let key = child.key;
-                    let val = child.val();
-                    let html = `<div class="bg-slate-50 p-4 rounded-xl border mb-4">
-                        <h3 class="font-bold text-lg text-indigo-900 mb-3">${val.name} (الرمز السري: <span class="font-mono">${val.pin}</span>)</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">`;
-                    
-                    subjectsList.forEach(sub => {
-                        let g = val.grades && val.grades[sub] ? val.grades[sub] : {c1:0, mid:0, c2:0};
-                        html += `<div class="bg-white p-3 rounded-lg border shadow-sm">
-                            <span class="font-bold block mb-2 text-gray-800 text-sm">${sub}</span>
-                            <div class="space-y-1">
-                                <div>سعي 1: <input type="number" id="c1_${key}_${sub}" value="${g.c1}" class="w-16 border rounded text-center p-1"></div>
-                                <div>نصف س: <input type="number" id="mid_${key}_${sub}" value="${g.mid}" class="w-16 border rounded text-center p-1"></div>
-                                <div>سعي 2: <input type="number" id="c2_${key}_${sub}" value="${g.c2}" class="w-16 border rounded text-center p-1"></div>
-                            </div>
-                        </div>`;
-                    });
+        async function loadTeacherStudentsList() {
+            let students = await fetchDatabase();
+            let listBody = document.getElementById("teacher-students-list");
+            listBody.innerHTML = "";
+            
+            let keys = Object.keys(students);
+            if (keys.length === 0) {
+                listBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">لا يوجد طلاب مسجلون حالياً.</td></tr>`;
+                return;
+            }
 
-                    html += `</div><button onclick="saveGrades('${key}')" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs transition">💾 حفظ درجات الطالب</button></div>`;
-                    container.innerHTML += html;
-                });
+            keys.forEach(code => {
+                let val = students[code];
+                listBody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-3 font-medium text-gray-800">${val.name}</td>
+                        <td class="p-3 font-mono font-bold text-indigo-600">${val.code}</td>
+                        <td class="p-3 text-center space-x-2 space-x-reverse">
+                            <button onclick="openEditGrades('${code}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">📝 تعديل الدرجات</button>
+                            <button onclick="deleteStudent('${code}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">🗑️ حذف</button>
+                        </td>
+                    </tr>
+                `;
             });
         }
 
-        function saveGrades(key) {
+        async function deleteStudent(code) {
+            if(confirm("هل أنت متأكد من حذف هذا الطالب نهائياً؟")) {
+                let students = await fetchDatabase();
+                delete students[code];
+                await saveDatabase(students);
+                loadTeacherStudentsList();
+            }
+        }
+
+        async function openEditGrades(code) {
+            currentEditingCode = code;
+            let students = await fetchDatabase();
+            let data = students[code];
+            
+            document.getElementById("edit-modal-title").innerText = "تعديل درجات الطالب: " + data.name;
+            
+            let container = document.getElementById("grades-inputs-container");
+            container.innerHTML = "";
+
+            subjectsList.forEach(subject => {
+                let g = data.grades && data.grades[subject] ? data.grades[subject] : {c1m1:0, c1m2:0, mid:0, c2m1:0, c2m2:0};
+                container.innerHTML += `
+                    <div class="bg-slate-50 p-3 rounded-xl border">
+                        <h4 class="font-bold text-indigo-900 mb-2 text-sm">${subject}</h4>
+                        <div class="grid grid-cols-5 gap-2 text-xs">
+                            <div><label class="block text-gray-500 mb-1">شهر 1 ك1</label><input type="number" data-sub="${subject}" data-field="c1m1" value="${g.c1m1}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                            <div><label class="block text-gray-500 mb-1">شهر 2 ك1</label><input type="number" data-sub="${subject}" data-field="c1m2" value="${g.c1m2}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                            <div><label class="block text-gray-500 mb-1">نصف السنة</label><input type="number" data-sub="${subject}" data-field="mid" value="${g.mid}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                            <div><label class="block text-gray-500 mb-1">شهر 1 ك2</label><input type="number" data-sub="${subject}" data-field="c2m1" value="${g.c2m1}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                            <div><label class="block text-gray-500 mb-1">شهر 2 ك2</label><input type="number" data-sub="${subject}" data-field="c2m2" value="${g.c2m2}" class="grade-input w-full p-1 border rounded text-center bg-white"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById("edit-grades-modal").classList.remove("hidden");
+        }
+
+        function closeEditModal() {
+            document.getElementById("edit-grades-modal").classList.add("hidden");
+            currentEditingCode = null;
+        }
+
+        async function saveStudentGrades() {
+            if(!currentEditingCode) return;
+
+            let students = await fetchDatabase();
+            if(!students[currentEditingCode]) return;
+
+            let inputs = document.querySelectorAll(".grade-input");
             let newGrades = {};
-            subjectsList.forEach(sub => {
-                let c1val = Number(document.getElementById(`c1_${key}_${sub}`).value) || 0;
-                let midval = Number(document.getElementById(`mid_${key}_${sub}`).value) || 0;
-                let c2val = Number(document.getElementById(`c2_${key}_${sub}`).value) || 0;
-                newGrades[sub] = { c1: c1val, mid: midval, c2: c2val };
+
+            inputs.forEach(input => {
+                let sub = input.getAttribute("data-sub");
+                let field = input.getAttribute("data-field");
+                let val = Number(input.value) || 0;
+
+                if(!newGrades[sub]) {
+                    newGrades[sub] = {};
+                }
+                newGrades[sub][field] = val;
             });
 
-            rtdb.ref(`students/${key}/grades`).set(newGrades, () => {
-                alert("تم تحديث وحفظ درجات الطالب بنجاح في السحابة!");
-            });
+            students[currentEditingCode].grades = newGrades;
+
+            let success = await saveDatabase(students);
+            if(success) {
+                alert("تم حفظ الدرجات بنجاح في السحابة!");
+                closeEditModal();
+            } else {
+                alert("حدث خطأ أثناء الحفظ!");
+            }
         }
     </script>
 </body>
